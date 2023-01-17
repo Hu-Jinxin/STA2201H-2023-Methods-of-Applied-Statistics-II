@@ -1,0 +1,75 @@
+---
+title: "STA2201-lab1"
+author: "Kerry Hu"
+date-format: "16/01/2023"
+format: pdf
+editor: visual
+---
+
+## \# Lab Exercises
+
+1\. Plot the ratio of male to female mortality rates over time for ages 10,20,30 and 40 (different color for each age) and change the theme.
+
+```{r}
+library(tidyverse)
+dm <- read_table("https://www.prdh.umontreal.ca/BDLC/data/ont/Mx_1x1.txt", skip = 2, col_types = "dcddd")
+dp <- dm |> 
+      filter(Age==10|Age==20|Age==30|Age==40)|> 
+      mutate(mf_ratio = Male/Female)|>select(Year,Age,mf_ratio)
+  dp|> ggplot(aes(x=Year,y=mf_ratio,color = Age))+geom_line()+labs(title = "10,20,30,40 year old MF mortality ratio over time, Ontario")+theme_bw(base_size = 14)
+```
+
+2\. Find the age that has the highest female mortality rate each year.
+
+```{r}
+summary_max <- dm |> group_by(Year)|>select(Year,Age,Female)|>
+summarize(max_mortality = max(Female, na.rm = TRUE))
+df_list1 = list(dm,summary_max)
+dmf<- df_list1 |> reduce(left_join, by='Year') |>select(Year,Age,Female,max_mortality)
+dmf <- dmf |>
+    mutate_at(3, ~replace_na(.,0))
+Year=rep(0,200)
+Age=rep(0,200)
+YearAge1<-data.frame(Year,Age)
+
+j=1
+for(i in 1:10989){
+  if(dmf$Female[i]==dmf$max_mortality[i]) {YearAge1$Age[j]<-dmf$Age[i];YearAge1$Year[j]<-dmf$Year[i];j=j+1}
+  }
+YearAge<-head(YearAge1,102)
+YearAge
+```
+
+3\. Use the \`summarize(across())\` syntax to calculate the standard deviation of mortality rates by age for the Male, Female and Total populations.
+
+```{r}
+summary_SD <- dm |> group_by(Age)|>
+  summarize(across(Female:Total, sd)) 
+summary_SD
+
+```
+
+4\. The Canadian HMD also provides population sizes over time (https://www.prdh.umontreal.ca/BDLC/data/ont/Population.txt). Use these to calculate the population weighted average mortality rate separately for males and females, for every year. Make a nice line plot showing the result (with meaningful labels/titles) and briefly comment on what you see (1 sentence). Hint: \`left_join\` will probably be useful here.
+
+```{r}
+df <- read_table("https://www.prdh.umontreal.ca/BDLC/data/ont/Population.txt",skip = 2, col_types = "dcddd")
+df_list1 = list(dm,df) 
+dmf<- df_list1 |> reduce(left_join, by=c('Year','Age'))
+dmf <-dmf |> mutate(weighed_F=Female.x*Female.y,weighed_M=Male.x*Male.y)|> select(-Total.x,-Total.y)
+dmfsum<- dmf |>group_by(Year) |>summarize(total_F=sum(Female.y, na.rm = TRUE),total_M=sum(Male.y, na.rm = TRUE))
+df_list2 = list(dmf,dmfsum) 
+dmf<- df_list2|> reduce(left_join, by='Year')
+dmf
+
+dmf <-dmf |> mutate(weighed_rate_F=Female.x*Female.y/total_F,weighed_rate_M=Male.x*Male.y/total_M)
+
+summary_mean <- dmf |> group_by(Year) |> 
+  summarize(mean_mortality_f = mean(weighed_rate_F, na.rm = TRUE),
+            mean_mortality_m = mean(weighed_rate_M, na.rm = TRUE))
+
+summary_mean|> ggplot(aes(x = Year))+geom_line(aes(y=mean_mortality_f),colour ="firebrick4")+geom_line(aes(y=mean_mortality_m),colour ="blue")+
+  labs(title = "Female&Male ave_weighted mortality rates over time, Ontario",
+       y = "Average Weighted Mortality rate") + scale_color_manual("",values = c("Female"="firebrick4","Male"="blue"))+ theme_bw(base_size = 14)
+```
+
+The trend of average weighted mortality rates over time of both gender was going down until 2000 year and after 2000 year,the trend became a little higher and stable.
