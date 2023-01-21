@@ -9,7 +9,7 @@ editor: visual
 
 To be handed in via submission of quarto file (and rendered pdf) to GitHub.
 
-1. Using the \`delay_2022\` data, plot the five stations with the highest mean delays. Facet the graph by \`line\`.
+1.  Using the \`delay_2022\` data, plot the five stations with the highest mean delays. Facet the graph by \`line\`.
 
 ```{r}
 library(opendatatoronto)
@@ -42,13 +42,12 @@ delay_2022 |>
              nrow = 4)+ coord_flip()
 ```
 
+2.  Using the \`opendatatoronto\` package, download the data on mayoral campaign contributions for 2014. Hints:
 
-2. Using the \`opendatatoronto\` package, download the data on mayoral campaign contributions for 2014. Hints:
+-   find the ID code you need for the package you need by searching for 'campaign' in the \`all_data\` tibble above
+-   you will then need to \`list_package_resources\` to get ID for the data file
+-   note: the 2014 file you will get from \`get_resource\` has a bunch of different campaign contributions, so just keep the data that relates to the Mayor election.
 
- + find the ID code you need for the package you need by searching for 'campaign' in the \`all_data\` tibble above
- + you will then need to \`list_package_resources\` to get ID for the data file
- + note: the 2014 file you will get from \`get_resource\` has a bunch of different campaign contributions, so just keep the data that relates to the Mayor election.  
- 
 ```{r}
 library(opendatatoronto)
 all_data <- list_packages(limit = 500) |>  filter(str_detect(title,"Campaign"))
@@ -60,10 +59,8 @@ campaign_2014_ids <- res |> filter(year==2014) |> select(id) |> pull()
 campaign1_2014<- get_resource(campaign_2014_ids[1])
 
 ```
- 
- 
 
-3. Clean up the data format (fixing the parsing issue and standardizing the column names using \`janitor\`)  
+3.  Clean up the data format (fixing the parsing issue and standardizing the column names using \`janitor\`)
 
 ```{r}
 library(janitor)
@@ -78,14 +75,13 @@ names(campaign2_2014)<-janitor::make_clean_names(names(campaign2_2014))
 campaign_2014<-campaign2_2014
 ```
 
+4.  Summarize the variables in the dataset. Are there missing values, and if so, should we be worried about them? Is every variable in the format it should be? If not, create new variable(s) that are in the right format.
 
-4. Summarize the variables in the dataset. Are there missing values, and if so, should we be worried about them? Is every variable in the format it should be? If not, create new variable(s) that are in the right format.  
-
-There are 13 variables in the dataset containing contributors_name,contributors_address,contributors_postal_code,contribution_amount,contribution_type_desc,goods_or_service_desc,contributor_type_desc,relationship_to_candidate,president_business_manager, authorized_representative,candidate,office,ward.Number of records was 10199.  
+There are 13 variables in the dataset containing contributors_name,contributors_address,contributors_postal_code,contribution_amount,contribution_type_desc,goods_or_service_desc,contributor_type_desc,relationship_to_candidate,president_business_manager, authorized_representative,candidate,office,ward.Number of records was 10199.
 
 There are missing values but we did not worry about them because their name, postal code,contribution candidate are not missing.Thus we could find their address from other database. Other missing variables did not matter due to not our interesting events.
 
-There is not one variable in the format it should be: president_business_manager should be switched into president_or_business_manager. 
+There is not one variable in the format it should be: president_business_manager should be switched into president_or_business_manager.
 
 ```{r}
 library(skimr)
@@ -99,7 +95,7 @@ campaign_2014|>
   summarize(across(everything(), ~ sum(is.na(.x))))
 ```
 
-5. Visually explore the distribution of values of the contributions. What contributions are notable outliers? Do they share a similar characteristic(s)? It may be useful to plot the distribution of contributions without these outliers to get a better sense of the majority of the data.  
+5.  Visually explore the distribution of values of the contributions. What contributions are notable outliers? Do they share a similar characteristic(s)? It may be useful to plot the distribution of contributions without these outliers to get a better sense of the majority of the data.
 
 ```{r}
 vis_dat(campaign_2014)
@@ -111,55 +107,56 @@ ggplot(data = campaign_2014) +
   geom_histogram(aes(x = numeric_vector))+scale_x_log10()
 ```
 
-
-1.00 CAD and 508224.73 CAD are outliers.  
+1.00 CAD and 508224.73 CAD are outliers.
 
 ```{r}
 campaign2_2014$contribution_amount<-round(numeric_vector,2)
 campaign_2014 <- campaign2_2014
 campaign_2014 |> filter(campaign_2014$contribution_amount==1.00|campaign_2014$contribution_amount==508224.73)
 ```
-They did not share a similar characteristic(s).  
 
+They did not share a similar characteristic(s).
 
-6. List the top five candidates in each of these categories:
-    + total contributions
-    + mean contribution
-    + number of contributions   
-    
-```{r}
-library(janitor)
-campaign_2014<-campaign2_2014
-campaign_2014 |> group_by(contributors_name) |> summarize(sum_cont=sum(contribution_amount)) |> arrange(-sum_cont)|>slice(1:5)
-campaign_2014 |> group_by(contributors_name) |> summarize(mean_cont=mean(contribution_amount)) |> arrange(-mean_cont)|>slice(1:5)
-campaign_2014 |> mutate(name_count=str_count(contributors_name)) |> arrange(-name_count)|>slice(1:5)
-```
-
-
-
-7. Repeat 5 but without contributions from the candidates themselves.  
+6.  List the top five candidates in each of these categories:
+    -   total contributions
+    -   mean contribution
+    -   number of contributions
 
 ```{r}
 library(janitor)
 campaign_2014<-campaign2_2014
-campaign_2014 |> group_by(contributors_name)|>filter(contributors_name!=candidate) |>summarize(sum_cont=sum(contribution_amount)) |> arrange(-sum_cont)|>slice(1:5)
-campaign_2014 |> group_by(contributors_name)|>filter(contributors_name!=candidate) |> summarize(mean_cont=mean(contribution_amount)) |> arrange(-mean_cont)|>slice(1:5)
-campaign_2014 |>filter(contributors_name!=candidate)|> mutate(name_count=str_count(contributors_name)) |> arrange(-name_count)|>slice(1:5)
+class(campaign_2014$contribution_amount)
+campaign_2014 |> group_by(candidate) |> summarize(sum_cont=sum(contribution_amount)) |> arrange(-sum_cont)|>slice(1:5)
+campaign_2014 |> group_by(candidate) |> summarize(mean_cont=mean(contribution_amount)) |> arrange(-mean_cont)|>slice(1:5)
+campaign_2014 |> group_by(candidate) |> summarize(num_contribution=length(contributors_name)) |> arrange(-num_contribution)|>slice(1:5)
 ```
 
+7.  Repeat 5 but without contributions from the candidates themselves.
 
-8. How many contributors gave money to more than one candidate?  
+```{r}
+library(janitor)
+campaign_2014<-campaign2_2014
+campaign_2014 |> group_by(candidate)|>filter(contributors_name!=candidate) |>summarize(sum_cont=sum(contribution_amount)) |> arrange(-sum_cont)|>slice(1:5)
+campaign_2014 |> group_by(candidate)|>filter(contributors_name!=candidate) |> summarize(mean_cont=mean(contribution_amount)) |> arrange(-mean_cont)|>slice(1:5)
+campaign_2014 |> group_by(candidate)|>filter(contributors_name!=candidate)|> summarize(num_contribution=length(contributors_name)) |> arrange(-num_contribution)|>slice(1:5)
+```
+
+8.  How many contributors gave money to more than one candidate?
 
 ```{r}
 library(janitor)
 library(dplyr)
 campaign_2014<-campaign2_2014
 
-camp<-campaign_2014 |> group_by(contributors_name)|>select(contributors_name,candidate) |> distinct() 
-sum(table(camp$contributors_name)-1)
-  
-n<-length(camp$contributors_name)-length(unique(camp$contributors_name))
-n
+camp2<- campaign_2014 |> group_by(contributors_name)|>select(contributors_name,candidate) |> summarize(num_candidates=n_distinct(candidate))|>
+  filter(num_candidates>1)
+nrow(camp2)
+length(camp2$contributors_name)
+
+#camp1<-campaign_2014 |> group_by(contributors_name)|>select(contributors_name,candidate) |> distinct()
+#camp1
+#sum(table(camp1$contributors_name)-1)
+
 ```
 
-194 contributors gave money to more than one candidate.
+184 contributors gave money to more than one candidate.
