@@ -50,6 +50,14 @@ delay_2022 |>
 
 ```{r}
 library(opendatatoronto)
+library(tidyverse)
+library(stringr)
+library(skimr) # EDA
+library(visdat) # EDA
+library(janitor)
+library(lubridate)
+library(ggrepel)
+
 all_data <- list_packages(limit = 500) |>  filter(str_detect(title,"Campaign"))
 
 res <- list_package_resources("f6651a40-2f52-46fc-9e04-b760c16edd5c") # obtained code from searching data frame above
@@ -67,12 +75,15 @@ library(janitor)
 head(campaign1_2014[2]$`2_Mayor_Contributions_2014_election.xls`)
 campaign2_2014  <-campaign1_2014[2]$`2_Mayor_Contributions_2014_election.xls`
 
-colnames(campaign2_2014) <- campaign2_2014[1,]
-campaign2_2014 <- campaign2_2014[-1, ] 
-         
+campaign2_2014 <- campaign2_2014 |> row_to_names(row_number = 1) 
+
+#colnames(campaign2_2014) <- campaign2_2014[1,]
+#campaign2_2014 <- campaign2_2014[-1, ] 
+
 # make the column names nicer to work with
 names(campaign2_2014)<-janitor::make_clean_names(names(campaign2_2014))
 campaign_2014<-campaign2_2014
+campaign_2014
 ```
 
 4.  Summarize the variables in the dataset. Are there missing values, and if so, should we be worried about them? Is every variable in the format it should be? If not, create new variable(s) that are in the right format.
@@ -153,7 +164,8 @@ camp2<- campaign_2014 |> group_by(contributors_name)|>select(contributors_name,c
 nrow(camp2)
 length(camp2$contributors_name)
 
-#camp1<-campaign_2014 |> group_by(contributors_name)|>select(contributors_name,candidate) |> distinct()
+#campaign_2014 |> group_by(contributors_name)|>select(contributors_name,candidate) |> distinct()|>
+#n_distinct(candidate)
 #camp1
 #sum(table(camp1$contributors_name)-1)
 
