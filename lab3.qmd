@@ -10,11 +10,10 @@ editor: visual
 
 Consider the happiness example from the lecture, with 118 out of 129 women indicating they are happy. We are interested in estimating $\theta$, which is the (true) proportion of women who are happy. Calculate the MLE estimate $\hat{\theta}$ and 95% confidence interval.\
 
-assume Y|θ ∼ Bin(n, θ) where y is the number of women who report to be happy out of the sample of n women.From previous knowledge,we knew that  
+assume Y\|θ ∼ Bin(n, θ) where y is the number of women who report to be happy out of the sample of n women.From previous knowledge,we knew that\
 $\hat \theta_{MLE}=\frac{y}{n}=\frac{118}{129}\approx 0.9147$.Its SE =$\sqrt{\frac{\hat\theta(1-\hat\theta)}{n}}=\sqrt{\frac{0.9147(1-0.9147)}{129}}\approx 0.02459$,so the 95% CI is (0.9147-1.96x0.02459,0.9147+1.96x0.02459)=(0.867,0.963).\
 
-$$L(\theta)=\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)}$$ 
-$$l(\theta)=log(\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)})=\Sigma_{i=1}^nlog(C_{y_i}^n)+\Sigma_{i=1}^ny_ilog(\theta)+\Sigma_{i=1}^n(n-y_i)log(1-\theta)$$
+$$L(\theta)=\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)}$$ $$l(\theta)=log(\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)})=\Sigma_{i=1}^nlog(C_{y_i}^n)+\Sigma_{i=1}^ny_ilog(\theta)+\Sigma_{i=1}^n(n-y_i)log(1-\theta)$$
 
 ```{r}
 library(optimr)
@@ -72,10 +71,9 @@ $p(\theta|y)=\frac{1}{Z}\theta^y(1-\theta)^{(n-y)}$\
 
 $Z=\frac{\Gamma(y+1)*\Gamma(n-y+1}{\Gamma(n+2)}$\
 
-The posterior is $p(\theta|y) \sim Beta(y+1, n−y+1)$. When y=118,n=129,plug them, so $p(\theta|y) \sim Beta(119,12)$\  
-the mean is $\frac{119}{119+12}\approx 0.908$,its SE is $\sqrt{\frac{119*12}{(119+12)^2(119+12+1)}}\approx 0.0251$.\
+The posterior is $p(\theta|y) \sim Beta(y+1, n−y+1)$. When y=118,n=129,plug them, so $p(\theta|y) \sim Beta(119,12)$  the mean is $\frac{119}{119+12}\approx 0.908$,its SE is $\sqrt{\frac{119*12}{(119+12)^2(119+12+1)}}\approx 0.0251$.\
 Thus, its 95% CI is (0.908-1.96X0.0251,0.908+1.96X0.0251)=(0.858,0.957)\
- 
+
 $pf=(y+1)/(y+1+n-y+1)$
 
 ```{r}
@@ -111,8 +109,7 @@ df|> ggplot(aes(x=theta,y=y))+geom_line(color = "firebrick4")+
 
 ```
 
-We knew that the #women need to non-negative integer.
-The Beta(10,10) is a symmetric bell curve ro replace a straight line in Question 2,which assumed that half(129/2=65) women reported being happy.Here #women feeling happy and non-happy should be pairs (0,0),(1,1),...,(9,9).We are assuming we know more amount of information as the prior used in Question 3.\
+We knew that the #women need to non-negative integer. The Beta(10,10) is a symmetric bell curve ro replace a straight line in Question 2,which assumed that half(129/2=65) women reported being happy.Here #women feeling happy and non-happy should be pairs (0,0),(1,1),...,(9,9).We are assuming we know more amount of information as the prior used in Question 3.\
 
 In question 2,Beta(1,1) means that #women feeling happy and non-happy only takes (0,0) for Beta(1+0,1+0).This tell us nothing about previous information.\
 The posterior is\
@@ -147,10 +144,10 @@ The likelihood function is a binomial distribution.$$p(\theta|y)=C_{y}^n \theta^
 ```{r}
 options(scipen=999)
 library(ggplot2)
-theta = seq(0, 100, by=1)
-df<-as.data.frame(theta,y=dbinom(theta,size=100,prob=118/129 ))
+theta = seq(0, 129, by=1)
+df<-as.data.frame(theta,y=dbinom(theta,size=129,prob=118/129 ))
 
-df|> ggplot(aes(x=theta,y=dbinom(theta,100,118/129 )))+geom_bar(stat = "identity", col = "red", fill = "blue")+
+df|> ggplot(aes(x=theta,y=dbinom(theta,129,118/129 )))+geom_bar(stat = "identity", col = "red", fill = "blue")+
   labs(title = "The likelihood Binomial Distribution", x="theta",y = "Density")+theme_minimal()+theme(plot.title = element_text(size = rel(1.2), vjust = 1.5))
 
 
@@ -170,7 +167,7 @@ df<-as.data.frame(cbind(theta,df1,df2))
 df|> ggplot(aes(x=theta,y=dbeta(theta, 1, 1)))+geom_line(color = "firebrick4")+
   labs(title = "Beta(1,1) Distribution", x="theta",y = "Density")+theme_minimal()
 
-ggplot(data.frame(theta= c(0, 1)),aes(theta)) + stat_function(fun = dbeta,args = list(shape1 = 1, shape2 = 1),color="red")+stat_function(fun = dbeta,args = list(shape1 = Y+1, shape2 = n-Y+1),color="blue")+labs(title = "Beta prior and posterior Distribution", x="theta",y = "Density")+theme_minimal()+scale_colour_manual(values = c(prior="red",posterior= "blue"))
+ggplot(data.frame(theta= c(0, 1)),aes(theta)) + stat_function(fun = dbeta,args = list(shape1 = 1, shape2 = 1),color="red")+stat_function(fun = dbeta,args = list(shape1 = Y+1, shape2 = n-Y+1),color="blue")+labs(title = "Beta prior and posterior Distribution", x="theta",y ="Density") +theme_minimal()+scale_colour_manual(values = c(prior="red",posterior= "blue"))
 
 ```
 
@@ -188,11 +185,11 @@ ggplot(data.frame(theta= c(0, 1)),aes(theta),color=prior+posterior) +prior+poste
   
 ```
 
-In question2 and question3 for the binomial likelihood, a Beta prior results in a Beta posterior distribution: we say that the beta prior is conjugate for the binomial likelihood.  
+In question2 and question3 for the binomial likelihood, a Beta prior results in a Beta posterior distribution: we say that the beta prior is conjugate for the binomial likelihood.
 
-In question2 its prior is Beta(1,1) which was a flat line and told us nothing about women dataset.In question 3 its prior is Beta(10,10) which was a symmetric bell curve  and assumed half women felt happy.  
+In question2 its prior is Beta(1,1) which was a flat line and told us nothing about women dataset.In question 3 its prior is Beta(10,10) which was a symmetric bell curve and assumed half women felt happy.
 
-In question2 and question3 no matter their priors are Non-informative prior, Weakly informative,proper and improper, the wave peak values of the final posteriors extremely increased, the location of the curve moved to right and values of the theta could close to 0.8-0.9.At the same time the width of the curves became relatively narrow.  
+In question2 and question3 no matter their priors are Non-informative prior, Weakly informative,proper and improper, the wave peak values of the final posteriors extremely increased, the location of the curve moved to right and values of the theta could close to 0.8-0.9.At the same time the width of the curves became relatively narrow.
 
 In question2 it posterior Beta(119,12) is a kind of combined and updated its prior with a binomial likelihood.In question3 it posterior Beta(128,21) is a kind of combined and updated its prior with a binomial likelihood. Both graphs are similar.
 
@@ -205,7 +202,6 @@ Given two prior distributions for $\theta$ (explaining each in a sentence):
 -   A non-informative prior, and
 
 -   A subjective/informative prior based on your best knowledge
-
 
 1)  Uniform(0,1) or Beta(1,1) is a non-informative prior,which assigns even choice to every $\theta$ and tells nothing to us from previous experience.
 
