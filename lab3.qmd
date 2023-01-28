@@ -8,9 +8,13 @@ editor: visual
 
 ## Question 1
 
-Consider the happiness example from the lecture, with 118 out of 129 women indicating they are happy. We are interested in estimating $\theta$, which is the (true) proportion of women who are happy. Calculate the MLE estimate $\hat{\theta}$ and 95% confidence interval.
+Consider the happiness example from the lecture, with 118 out of 129 women indicating they are happy. We are interested in estimating $\theta$, which is the (true) proportion of women who are happy. Calculate the MLE estimate $\hat{\theta}$ and 95% confidence interval.\
 
-assume Y\|θ ∼ Bin(n, θ) where y is the number of women who report to be happy out of the sample of n women. $$L(\theta)=\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)}$$ $$l(\theta)=log(\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)})=\Sigma_{i=1}^nlog(C_{y_i}^n)+\Sigma_{i=1}^ny_ilog(\theta)+\Sigma_{i=1}^n(n-y_i)log(1-\theta)$$
+assume Y|θ ∼ Bin(n, θ) where y is the number of women who report to be happy out of the sample of n women.From previous knowledge,we knew that  
+$\hat \theta_{MLE}=\frac{y}{n}=\frac{118}{129}\approx 0.9147$.Its SE =$\sqrt{\frac{\hat\theta(1-\hat\theta)}{n}}=\sqrt{\frac{0.9147(1-0.9147)}{129}}\approx 0.02459$,so the 95% CI is (0.9147-1.96x0.02459,0.9147+1.96x0.02459)=(0.867,0.963).\
+
+$$L(\theta)=\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)}$$ 
+$$l(\theta)=log(\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)})=\Sigma_{i=1}^nlog(C_{y_i}^n)+\Sigma_{i=1}^ny_ilog(\theta)+\Sigma_{i=1}^n(n-y_i)log(1-\theta)$$
 
 ```{r}
 library(optimr)
@@ -30,7 +34,7 @@ optim(0.5,loglike1,Y=data1)
 
 ```
 
-$\theta_{MLE}=0.9134277$
+$\theta_{MLE}=0.9134277\approx 0.913$
 
 Here, assume the MLE of $\theta$ is asymptotically normal distribution.
 
@@ -53,23 +57,25 @@ cat("\nEstimated theta = ",round(thetahat,3)," 95 percent CI from ",
 
 ```
 
-My MLE of $\theta$ is 0.913 and 95% CI of $\theta$ is within (0.865,0.962).
+My MLE of $\theta$ is 0.913 and 95% CI of $\theta$ is within (0.865,0.962).\
 
 ## Question 2
 
-Assume a Beta(1,1) prior on $\theta$. Calculate the posterior mean for $\hat{\theta}$ and 95% credible interval.
+Assume a Beta(1,1) prior on $\theta$. Calculate the posterior mean for $\hat{\theta}$ and 95% credible interval.\
 
-Likelihood is $Y|θ \sim Bin(n,\theta)$ so $$p(\theta|y)=C_y^n \theta^y(1-\theta)^{(n-y)}$$
+Likelihood is $Y|θ \sim Bin(n,\theta)$ so $$p(\theta|y)=C_y^n \theta^y(1-\theta)^{(n-y)}$$\
 
 $\theta \sim U(0, 1)=beta(1,1) \quad so \quad p(\theta) = 1$\
-the posterior distribution
+the posterior distribution\
 
-$p(\theta|y)=\frac{1}{Z}\theta^y(1-\theta)^{(n-y)}$
+$p(\theta|y)=\frac{1}{Z}\theta^y(1-\theta)^{(n-y)}$\
 
-$Z=\frac{\Gamma(y+1)*\Gamma(n-y+1}{\Gamma(n+2)}$
+$Z=\frac{\Gamma(y+1)*\Gamma(n-y+1}{\Gamma(n+2)}$\
 
-The posterior is $p(\theta|y) \sim Beta(y+1, n−y+1)$
-
+The posterior is $p(\theta|y) \sim Beta(y+1, n−y+1)$. When y=118,n=129,plug them, so $p(\theta|y) \sim Beta(119,12)$\  
+the mean is $\frac{119}{119+12}\approx 0.908$,its SE is $\sqrt{\frac{119*12}{(119+12)^2(119+12+1)}}\approx 0.0251$.\
+Thus, its 95% CI is (0.908-1.96X0.0251,0.908+1.96X0.0251)=(0.858,0.957)\
+ 
 $pf=(y+1)/(y+1+n-y+1)$
 
 ```{r}
@@ -97,16 +103,20 @@ Now assume a Beta(10,10) prior on $\theta$. What is the interpretation of this p
 ```{r}
 library(ggplot2)
 theta = seq(0, 1, length=100)
-df<-dbeta(theta, 10, 10)
+df=y<-dbeta(theta, 10, 10)
 df<-as.data.frame(df)
-df|> ggplot(aes(x=theta,y=dbeta(theta, 10, 10)))+geom_line(color = "firebrick4")+
+df|> ggplot(aes(x=theta,y=y))+geom_line(color = "firebrick4")+
   labs(title = "Beta(10,10) Distribution", x="theta",y = "Density")+theme_minimal()
 #In Bayesian language, the prior is your belief about the parameter theta prior to getting any data. The posterior combines both your prior belief and the data. Thus, the posterior is your belief about the parameter theta after examining the dataset. That is, you have used the dataset to update your beliefs about theta#
 
 ```
 
-The Beta(10,10) is a symmetric bell curve ro replace a straight line in Question 2. We are assuming we know more amount of information as the prior used in Question 3.\
+We knew that the #women need to non-negative integer.
+The Beta(10,10) is a symmetric bell curve ro replace a straight line in Question 2,which assumed that half(129/2=65) women reported being happy.Here #women feeling happy and non-happy should be pairs (0,0),(1,1),...,(9,9).We are assuming we know more amount of information as the prior used in Question 3.\
+
+In question 2,Beta(1,1) means that #women feeling happy and non-happy only takes (0,0) for Beta(1+0,1+0).This tell us nothing about previous information.\
 The posterior is\
+
 $p(\theta|y) \sim Beta(y+10,n−y+10)$
 
 $ppf=(y+10)/(y+10+n−y+10)$
@@ -137,17 +147,16 @@ The likelihood function is a binomial distribution.$$p(\theta|y)=C_{y}^n \theta^
 ```{r}
 options(scipen=999)
 library(ggplot2)
-theta = seq(0, 200, by=1)
-df<-dbinom(theta,size=200,prob=118/129 )
-df<-as.data.frame(df)
-df|> ggplot(aes(x=theta,y=dbinom(theta,129 ,118/129 )))+geom_line(color = "firebrick4")+
-  labs(title = "The likelihood Binomial Distribution", x="theta",y = "Density")+theme_minimal()
+theta = seq(0, 100, by=1)
+df<-as.data.frame(theta,y=dbinom(theta,size=100,prob=118/129 ))
 
-df|> ggplot() + geom_histogram(aes(x = theta))+scale_x_log10()+theme_minimal()
+df|> ggplot(aes(x=theta,y=dbinom(theta,100,118/129 )))+geom_bar(stat = "identity", col = "red", fill = "blue")+
+  labs(title = "The likelihood Binomial Distribution", x="theta",y = "Density")+theme_minimal()+theme(plot.title = element_text(size = rel(1.2), vjust = 1.5))
+
 
 ```
 
-Beta(1,1) prior on $\theta$ in question 2
+Beta(1,1) prior on $\theta$ and Beta(y+1, n−y+1) posterior on $\theta$ in question 2.\
 
 ```{r}
 library(ggplot2)
@@ -179,9 +188,13 @@ ggplot(data.frame(theta= c(0, 1)),aes(theta),color=prior+posterior) +prior+poste
   
 ```
 
-In question2 and question3 for the binomial likelihood, a Beta prior results in a Beta posterior distribution: we say that the beta prior is conjugate for the binomial likelihood.
+In question2 and question3 for the binomial likelihood, a Beta prior results in a Beta posterior distribution: we say that the beta prior is conjugate for the binomial likelihood.  
 
-In question2 and question3 no matter their priors are Non-informative prior, Weakly informative,proper and improper, the wave peak values of the final posteriors extremely increased, the location of the bell waves moved to right and values of the theta could close to 0.8-0.9.At the same time the width of the bell waves became relatively narrow.
+In question2 its prior is Beta(1,1) which was a flat line and told us nothing about women dataset.In question 3 its prior is Beta(10,10) which was a symmetric bell curve  and assumed half women felt happy.  
+
+In question2 and question3 no matter their priors are Non-informative prior, Weakly informative,proper and improper, the wave peak values of the final posteriors extremely increased, the location of the curve moved to right and values of the theta could close to 0.8-0.9.At the same time the width of the curves became relatively narrow.  
+
+In question2 it posterior Beta(119,12) is a kind of combined and updated its prior with a binomial likelihood.In question3 it posterior Beta(128,21) is a kind of combined and updated its prior with a binomial likelihood. Both graphs are similar.
 
 ## Question 5
 
@@ -189,12 +202,11 @@ In question2 and question3 no matter their priors are Non-informative prior, Wea
 
 Given two prior distributions for $\theta$ (explaining each in a sentence):
 
--   A noninformative prior, and
+-   A non-informative prior, and
 
 -   A subjective/informative prior based on your best knowledge
 
-For simplicity, assume the $\theta$ are normally distributed with mean $\mu$ and standard deviation $\sigma$.
 
-1)  Uniform(0,+$\infty$) or Beta(1,1) is a Non-informative prior which gives nothing for the data and is improper choice.
+1)  Uniform(0,1) or Beta(1,1) is a non-informative prior,which assigns even choice to every $\theta$ and tells nothing to us from previous experience.
 
-2)  Binomial distribution function is useful informative prior which gives us to compute the proportion for the data.
+2)  Beta(10,90) is a useful informative prior because the most students improved by 10% on average with a SD of 2% after 1-month training.
