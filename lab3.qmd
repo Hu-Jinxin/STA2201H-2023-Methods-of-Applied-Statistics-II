@@ -16,6 +16,7 @@ $\hat \theta_{MLE}=\frac{y}{n}=\frac{118}{129}\approx 0.9147$.Its SE =$\sqrt{\fr
 $$L(\theta)=\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)}$$ $$l(\theta)=log(\prod_{i=1}^n C_{y_i}^n \theta^{y_i}(1-\theta)^{(n-y_i)})=\Sigma_{i=1}^nlog(C_{y_i}^n)+\Sigma_{i=1}^ny_ilog(\theta)+\Sigma_{i=1}^n(n-y_i)log(1-\theta)$$
 
 ```{r}
+#| message: false
 library(optimr)
 set.seed(1)
 data1<-rbinom(200, 129,118/129)
@@ -148,12 +149,22 @@ theta = seq(0, 129, by=1)
 df<-as.data.frame(theta,y=dbinom(theta,size=129,prob=118/129 ))
 
 df|> ggplot(aes(x=theta,y=dbinom(theta,129,118/129 )))+geom_bar(stat = "identity", col = "red", fill = "blue")+
-  labs(title = "The likelihood Binomial Distribution", x="theta",y = "Density")+theme_minimal()+theme(plot.title = element_text(size = rel(1.2), vjust = 1.5))
+  labs(title = "The likelihood Binomial Distribution", x="theta",y = "Density")+xlim(100, 130)+
+ theme_minimal()+theme(plot.title = element_text(size = rel(1.2), vjust = 1.5))
+
+
+random.binom.df <- rbinom(10000, 129, 118/129)
+binom.R.df <- data.frame(binom = random.binom.df)
+ggplot(binom.R.df) +geom_histogram(aes(x = binom), binwidth = 1, col="black",fill = "pink") +ggtitle("The likelihood Binomial Distribution") +theme_minimal()+
+scale_x_continuous(name="theta")
+
 
 
 ```
 
-Beta(1,1) prior on $\theta$ and Beta(y+1, n−y+1) posterior on $\theta$ in question 2.\
+Beta(1,1) prior on $\theta$ and Beta(y+1, n−y+1) posterior on $\theta$ in question 2.
+
+Beta(10,10) prior on $\theta$ and Beta(y+10, n−y+10) posterior on $\theta$ in question 3.
 
 ```{r}
 library(ggplot2)
@@ -162,27 +173,15 @@ n=129
 theta = seq(0, 1, length=100)
 df1<-dbeta(theta,1,1)
 df2<-dbeta(theta,Y+1,n-Y+1)
-df<-as.data.frame(cbind(theta,df1,df2))
+df3<-dbeta(theta,10,10)
+df4<-dbeta(theta,Y+10,n-Y+10)
 
-df|> ggplot(aes(x=theta,y=dbeta(theta, 1, 1)))+geom_line(color = "firebrick4")+
-  labs(title = "Beta(1,1) Distribution", x="theta",y = "Density")+theme_minimal()
+df<-as.data.frame(cbind(theta,df1,df2,df3,df4))
 
-ggplot(data.frame(theta= c(0, 1)),aes(theta)) + stat_function(fun = dbeta,args = list(shape1 = 1, shape2 = 1),color="red")+stat_function(fun = dbeta,args = list(shape1 = Y+1, shape2 = n-Y+1),color="blue")+labs(title = "Beta prior and posterior Distribution", x="theta",y ="Density") +theme_minimal()+scale_colour_manual(values = c(prior="red",posterior= "blue"))
+df|> ggplot(aes(x=theta))+geom_line(aes(y=df1),color = "red")+geom_line(aes(y=df2),color = "blue")+geom_line(aes(y=df3),color ="purple")+geom_line(aes(y=df4),color = "green")+labs(title = "Beta prior and posterior Distribution", x="theta",y = "Density")+theme_minimal()+ scale_color_manual(values=c("red","blue","purple","green"))
 
-```
+ggplot(data.frame(theta= c(0, 1)),aes(theta)) + stat_function(fun = dbeta,args = list(shape1 = 1, shape2 = 1),color="red")+stat_function(fun = dbeta,args = list(shape1 = Y+1, shape2 = n-Y+1),color="blue")+stat_function(fun = dbeta,args = list(shape1 = 10, shape2 = 10),color="purple")+stat_function(fun = dbeta,args = list(shape1 = Y+10, shape2 = n-Y+10),color="green")+labs(title = "Beta prior and posterior Distribution for Q2&Q3", x="theta",y ="Density") +theme_minimal()
 
-Beta(10,10) prior on $\theta$ and Beta(y+10, n−y+10) posterior on $\theta$ in question 3
-
-```{r}
-library(ggplot2)
-Y=as.integer(mean(data1))
-n=129
-theta = seq(0, 1, length=100)
-prior <-stat_function(fun = dbeta,args = list(shape1 = 10, shape2 = 10),color="red")
-posterior<- stat_function(fun = dbeta,args = list(shape1 = Y+10, shape2 = n-Y+10),color="blue")
-ggplot(data.frame(theta= c(0, 1)),aes(theta),color=prior+posterior) +prior+posterior+labs(title = "Beta prior and posterior Distribution", x="theta",y = "Density") +theme_minimal()+scale_colour_manual(values = c(prior="red",posterior= "blue"))+scale_fill_manual(values=c("red", "blue"))
-  
-  
 ```
 
 In question2 and question3 for the binomial likelihood, a Beta prior results in a Beta posterior distribution: we say that the beta prior is conjugate for the binomial likelihood.
