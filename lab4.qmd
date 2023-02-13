@@ -314,6 +314,31 @@ fit2 |>
 Add in mother's IQ as a covariate and rerun the model. Please  mean center the covariate before putting it into the model. Interpret the coefficient on the (centered) mum's IQ.  
 
 
+
+```{r}
+y <- kidiq1$kid_score
+mu0 <- 80
+sigma0 <- 10
+# named list to input for stan function
+data <- list(y = y, 
+             N = length(y), 
+             mu0 = mu0,
+             sigma0 = sigma0)
+
+X <-  cbind(as.matrix(kidiq1$mom_hs),as.matrix(kidiq1$mom_iq)) # force this to be a matrix
+K <- 2
+
+data <- list(y = y, N = length(y), 
+             X =X, K = K)
+mod3 <- stan(file = here::here("D:\\kids3.stan"),
+            data = data, 
+            iter = 1000)
+
+summary(mod3)$summary[c("alpha", "beta[1]","beta[2]"),]
+
+```
+
+
 ```{r}
 y <- kidiq1$kid_score
 mu0 <- 80
@@ -329,17 +354,16 @@ K <- 2
 
 data <- list(y = y, N = length(y), 
              X =X, K = K)
-mod3 <- stan(file = here::here("D:\\kids3.stan"),
+mod4 <- stan(file = here::here("D:\\kids3.stan"),
             data = data, 
             iter = 1000)
-```
-
-```{r}
-summary(mod3)$summary[c("alpha", "beta[1]","beta[2]"),]
+            
+summary(mod4)$summary[c("alpha", "beta[1]","beta[2]"),]
 mean(kidiq1$kid_score)
 ```
 
-Here the alpha(intercept) means that when the mom_iq was in the average of all mom_iqs and moms did not complete their high school education, the kids' test score actually was what should be(82.217).The centered intercept should be totally different from the non-centered data before.  
+
+Here the alpha(intercept) means that when the mom_iq was in the average of all mom_iqs and moms did not complete their high school education, the kids' test score actually was what should be(82.217).The centered intercept should be totally different from the non-centered data before(25.9479477).
 
 Here the beta[1] is an estimator that shows a positive relationship between the kids' test score and moms' education level.It means that when the moms completed their high school education her kids' test score also increased by 5.6837998 scores corresponding to the moms' education variation. 
 
@@ -359,13 +383,13 @@ library(dplyr)
 library(janitor)
 
 
-summary(mod3)$summary[c("alpha", "beta[1]","beta[2]"),]
+summary(mod4)$summary[c("alpha", "beta[1]","beta[2]"),]
 
 kidiq2<- kidiq1 |> mutate(mom_iq=mom_iq-mean(mom_iq))
 kidiq2<-as.data.frame(kidiq2)
 
-mod4<- lm(kid_score~mom_hs+mom_iq,data=kidiq2)  
-summary(mod4)$coeff
+mod5<- lm(kid_score~mom_hs+mom_iq,data=kidiq2)  
+summary(mod5)$coeff
 ```
 
 The 3 estimators in both models are almost same.
@@ -383,13 +407,13 @@ library(tidyverse)
 mean_mom_iq<-mean(kidiq1$mom_iq)
 mean_mom_iq
 
-post_mod3_samples <- extract(mod3)
-length(post_mod3_samples)
-dim(post_mod3_samples[["beta"]])
+post_mod4_samples <- extract(mod4)
+length(post_mod4_samples)
+dim(post_mod4_samples[["beta"]])
 
 x_new1 <- 110-mean_mom_iq
 
-mod3 |>
+mod4 |>
   spread_draws(alpha, beta[k]) |> pivot_wider( names_from = "k", values_from = "beta")|>
   dplyr::rename(beta1="1",beta2="2")|>
      mutate(nhs = alpha+beta2*x_new1, # no high school is just the intercept
@@ -411,13 +435,13 @@ Generate and plot (as a histogram) samples from the posterior predictive distrib
 
 ```{r}
 library(ggplot2)
-mod3_alpha <- post_mod3_samples[["alpha"]]
-mod3_beta1 <- post_mod3_samples[["beta"]][,1] 
-mod3_beta2 <- post_mod3_samples[["beta"]][,2]
+mod4_alpha <- post_mod4_samples[["alpha"]]
+mod4_beta1 <- post_mod4_samples[["beta"]][,1] 
+mod4_beta2 <- post_mod4_samples[["beta"]][,2]
 x_new2 <-95-mean_mom_iq
-lin_mod3_pred <- mod3_alpha + mod3_beta1*1+mod3_beta2*x_new2
-hist(lin_mod3_pred)
-as.data.frame(lin_mod3_pred) |> ggplot(aes(x=lin_mod3_pred))+geom_histogram(color="black", fill="white")+ theme_bw() + ggtitle("Posterior estimates of scores by education level of mothers with IQ=95")+xlab("estimated_score")
+lin_mod4_pred <- mod4_alpha + mod4_beta1*1+mod4_beta2*x_new2
+hist(lin_mod4_pred)
+as.data.frame(lin_mod4_pred) |> ggplot(aes(x=lin_mod4_pred))+geom_histogram(color="black", fill="white")+ theme_bw() + ggtitle("Posterior estimates of scores by education level of mothers with IQ=95")+xlab("estimated_score")
 
 ```
 
