@@ -65,7 +65,8 @@ aff.i <- c(0.2415,0.2309,0.3999,0.2977,0.3264,0.3346,0.4150,0.4202,0.1023,0.1752
 Explain a bit more what the `expect.i` variable is. For example, if a particular area has an expected deaths of 6, what does this mean?  
 
 
-The expected deaths is the implied number of lip cancer deaths for a particular region given that region's age structure and the national level age-specific mortality rates for lip cancer.For example, an expected number of deaths of 6 would mean that for that particular region,we would expect 6 lip cancer deaths if this region were to experience the same age specific mortality rates as at the national level.
+The expected deaths is the implied number of lip cancer deaths for a particular region, given that region's age structure and the national level age-specific mortality rates for lip cancer.For example, an expected number of deaths of 6 would mean that for that particular region,we would expect 6 lip cancer deaths if this region were to experience the same age specific mortality rates as at the national level.
+
 
 
 ## Question 2
@@ -89,15 +90,15 @@ $$ \alpha \sim N(0,1)\\ \beta \sim N(0,1)$$
 library(tidyverse)
 library(rstan)
 library(tidybayes)
+library(here)
+
 
 stan_data <- list(y=observe.i,
                   log_e=log(expect.i),
                   N=length(observe.i),
                   x=aff.i-mean(aff.i))
 
-mod1<-stan(data=stan_data,file="D:\\lab9\\lab9_1.stan")
-
-
+mod1<-stan(data=stan_data,file="D:\\lab9\\lab9_1.stan",refresh = 0)
 
 
 ```
@@ -115,7 +116,7 @@ with
 $$ \alpha_i \sim N(0, 1)\\ \beta \sim N(0,1)$$
 
 ```{r}
-mod2<-stan(data=stan_data,file="D:\\lab9\\lab9_2.stan")
+mod2<-stan(data=stan_data,file="D:\\lab9\\lab9_2.stan",refresh = 0)
 ```
 
 
@@ -133,7 +134,7 @@ $$ \alpha_i \sim N(\mu, \sigma^2)\\ \beta \sim N(0,1) \\ \mu \sim N(0,1) \\ \sig
 
 
 ```{r}
-mod3<-stan(data=stan_data,file="D:\\lab9\\lab9_3.stan")
+mod3<-stan(data=stan_data,file="D:\\lab9\\lab9_3.stan",refresh = 0)
 ```
 
 
@@ -175,22 +176,40 @@ select(i,median_mod3:upper_mod3)
 ```
 
 ```{r}
-
+#res <- res_mod1 |>left_join(res_mod2)|> left_join(res_mod3)
 res_mod<- as.data.frame(cbind(res_mod1,res_mod2[,c(2,3,4)],res_mod3[,c(2,3,4)]))
 
+res_mod|>
+  select(median_mod1, median_mod2, median_mod3)|>
+  pivot_longer(median_mod1:median_mod3, names_to='model', values_to='log_theta')|>
+  mutate(model = str_remove(model, 'median_'))|>
+  ggplot(aes(log_theta, fill=model))+
+  geom_histogram(position = 'dodge') +
+  labs(x ="theta (log-scale)", y = "Frequency", title = "Posterior Densities of 3 models")+
+  theme_bw(base_size = 14)
+
+  
+```
+
+
+
+```{r}
 res_mod |>
   mutate(deaths=observe.i)|>
   mutate(log_smr=log(observe.i/expect.i))|>
-  ggplot(aes(log_smr,median_mod1,color="Model 1"),alpha=0.6)+
+  ggplot(aes(log_smr,median_mod1,color="Model 1"),alpha=0.8)+
   geom_point(aes(size=deaths))+
   geom_errorbar(aes(ymin=lower_mod1,ymax=upper_mod1),alpha=0.8)+
   geom_abline(slope=1,intercept=0)+
   geom_point(aes(log_smr,median_mod2,color="Model 2"),alpha=0.8)+
   geom_errorbar(aes(ymin=lower_mod2,ymax=upper_mod2),alpha=0.8)+
   geom_point(aes(log_smr,median_mod3,color="Model 3"),alpha=0.8)+
-  geom_errorbar(aes(ymin=lower_mod3,ymax=upper_mod3),alpha=0.8)
-  
+  geom_errorbar(aes(ymin=lower_mod3,ymax=upper_mod3),alpha=0.8)+ 
+  labs(x = "SMR (log-scale)", y = "theta (log-scale)", title = "Posterior Distributions of 3 models")+
+  theme_bw(base_size = 14)
+ 
 ```
+The differences in estimated $\theta_i$'s across regions were there were the different morality rates for different 200 regions.
 
-
+The differences in $\theta$s across models were there were the different morality rates for different 3 models.We can assume that each morality rate of the model was the average of respondent the model.
 

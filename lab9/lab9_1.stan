@@ -1,6 +1,6 @@
 
 data{
-int N;
+int N;//No# of regions
 int y[N];// deaths
 vector[N] log_e;//log of expected deaths
 vector[N] x;//proportion of outside workers
