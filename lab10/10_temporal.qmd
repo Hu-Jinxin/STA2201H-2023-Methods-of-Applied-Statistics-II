@@ -261,15 +261,16 @@ Here VR data means data from vital registration systems which is the best and re
 #| warning: false
 #| results: hide
 
+
 no_vr_lka <- lka |>filter(source != "VR")
 
 no_vr_observed_years <- no_vr_lka$year
 no_vr_years <- min(no_vr_observed_years):max(no_vr_observed_years)
-no_vr_nyears <- length(years)
+no_vr_nyears <- length(no_vr_years)
 N <- length(no_vr_observed_years)
 
-no_vr_stan_data <- list(y = no_vr_lka$logit_ratio, year_i = no_vr_observed_years - years[1]+1, 
-                        T = no_vr_nyears, years = years, N = N, se = no_vr_lka$se, P=P)
+no_vr_stan_data <- list(y = no_vr_lka$logit_ratio, year_i = no_vr_observed_years - no_vr_years[1]+1, 
+                        T = no_vr_nyears, years = no_vr_years, N = N, se = no_vr_lka$se, P=P)
 
 ```
 
@@ -281,18 +282,17 @@ no_vr_stan_data <- list(y = no_vr_lka$logit_ratio, year_i = no_vr_observed_years
 mod4 <- stan(data = no_vr_stan_data,
              file = "lab10_lka_RW2.stan",
              refresh = 0)
-```
 
-```{r}
+
 res4 <- mod4 |> 
   gather_draws(mu[t]) |> 
   median_qi() |> 
-  mutate(year = years[t])
+  mutate(year = no_vr_years[t])
 
 res4_p <- mod4 |> 
   gather_draws(mu_p[p]) |> 
   median_qi() |> 
-  mutate(year = years[nyears]+p)
+  mutate(year = no_vr_years[no_vr_nyears]+p)
 ```
 
 
@@ -319,21 +319,125 @@ From the above graph we could see that the uncertainty or CI is more stable amon
 
 ## Question 6
 
-Briefly comment on which model you think is most appropriate, or an alternative model that would be more appropriate in this context. 
+Briefly comment on which model you think is most appropriate, or an alternative model that would be more appropriate in this context.  
 
-I think that the three models have their cons and pros:  
+For linear model without VR sources:  
 
-1)the linear model is too simple and easy to be used, but a little vague,thus there is no exact prediction.  
+```{r}
+#| message: false
+#| warning: false
 
-2)1st and 2nd random walk models could show promise in picking up characteristics of time series but useless for understanding why changes are
+
+no_vr_lka <- lka |>filter(source != "VR")
+
+no_vr_observed_years <- no_vr_lka$year
+no_vr_years <- min(no_vr_observed_years):max(no_vr_observed_years)
+no_vr_nyears <- length(no_vr_years)
+N <- length(no_vr_observed_years)
+m_year<- as.integer(mean(no_vr_years))
+
+
+no_vr_stan_data <- list(y = no_vr_lka$logit_ratio, year_i = no_vr_observed_years - no_vr_years[1]+1, 
+                        T = no_vr_nyears, years = no_vr_years, N = N,
+                        mid_year = m_year, se = no_vr_lka$se, P=P)
+
+
+mod5 <- stan(data = no_vr_stan_data,
+             file = "lab10_lka_linear.stan",
+             refresh = 0)
+
+res5 <- mod5 |> 
+  gather_draws(mu[t]) |> 
+  median_qi() |> 
+  mutate(year = no_vr_years[t])
+
+res5_p <- mod5 |> 
+  gather_draws(mu_p[p]) |> 
+  median_qi() |> 
+  mutate(year = no_vr_years[no_vr_nyears]+p)
+
+ggplot(no_vr_lka, aes(year, logit_ratio)) +
+  geom_point(aes( color = source)) + 
+  geom_line(aes( color = source), lty = 2) + 
+  geom_ribbon(aes(ymin = logit_ratio - se, 
+                  ymax = logit_ratio + se, 
+                  fill =  source), alpha = 0.1) + 
+  theme_bw()+
+  geom_line(data = res5, aes(year, .value)) + 
+  geom_ribbon(data = res5, aes(y = .value, ymin = .lower, ymax = .upper), alpha = 0.2)+
+  geom_line(data = res5_p, aes(year, .value), col='red') + 
+  geom_ribbon(data = res5_p, aes(y = .value, ymin = .lower, ymax = .upper), alpha = 0.2, fill='red')+
+  theme_bw()+scale_color_brewer(palette="Set1")+
+  labs(title = "Ratio of neonatal to other child mortality (logged), Sri Lanka",
+       y = "log ratio", subtitle = "The linear fit shown in black without the VR source")
+       
+```
+
+
+For first order random walk model without VR sources:  
+
+```{r}
+#| message: false
+#| warning: false
+
+
+
+no_vr_lka <- lka |>filter(source != "VR")
+
+no_vr_observed_years <- no_vr_lka$year
+no_vr_years <- min(no_vr_observed_years):max(no_vr_observed_years)
+no_vr_nyears <- length(no_vr_years)
+N <- length(no_vr_observed_years)
+
+no_vr_stan_data <- list(y = no_vr_lka$logit_ratio, year_i = no_vr_observed_years - no_vr_years[1]+1, 
+                        T = no_vr_nyears, years = no_vr_years, N = N, se = no_vr_lka$se, P=P)
+
+mod6 <- stan(data = no_vr_stan_data,
+             file = "lab10_lka_RW1.stan",
+             refresh = 0)
+
+res6 <- mod6 |> 
+  gather_draws(mu[t]) |> 
+  median_qi() |> 
+  mutate(year = no_vr_years[t])
+
+res6_p <- mod6 |> 
+  gather_draws(mu_p[p]) |> 
+  median_qi() |> 
+  mutate(year = no_vr_years[no_vr_nyears]+p)
+
+
+ggplot(no_vr_lka, aes(year, logit_ratio)) +
+  geom_point(aes( color = source)) + 
+  geom_line(aes( color = source), lty = 2) + 
+  geom_ribbon(aes(ymin = logit_ratio - se, 
+                  ymax = logit_ratio + se, 
+                  fill =  source), alpha = 0.1) + 
+  theme_bw()+
+  geom_line(data = res6, aes(year, .value)) + 
+  geom_ribbon(data = res6, aes(y = .value, ymin = .lower, ymax = .upper), alpha = 0.2)+
+  geom_line(data = res6_p, aes(year, .value), col='red') + 
+  geom_ribbon(data = res6_p, aes(y = .value, ymin = .lower, ymax = .upper), alpha = 0.2, fill='red')+
+  theme_bw()+scale_color_brewer(palette="Set1")+
+  labs(title = "Ratio of neonatal to other child mortality (logged), Sri Lanka",
+       y = "log ratio", subtitle = "The first order random walk fit shown in black without the VR source")
+```
+
+
+
+I think that the three models have their cons and pros although the three models still were good:  
+
+1) the linear model is too simple and easy to be used, but a little vague,thus there is no exact prediction.  
+
+2) 1st and 2nd random walk models could show promise in picking up characteristics of time series but useless for understanding why changes are
 happening, and whether they are likely to happen in future.
 
 I just choose an alternative model-Bayesian hierarchical state-space model.The reason is that:
 
-1)It could hold a whole suite of candidate covariates.  
+1) It could hold a whole suite of candidate covariates.  
 
-2)It could have a association between interest outcomes and covariates are allowed to vary by geography and over time (in a smooth way).For example,we can put a time series model on the regression coefficients.  
+2) It could have a association between interest outcomes and covariates are allowed to vary by geography and over time (in a smooth way).For example,we can put a time series model on the regression coefficients.  
 
-3)It is useful in understanding changes in observed outcomes as well, in a regression framework and better projection.
+3) It is useful in understanding changes in observed outcomes as well, in a regression framework and better projection.
 
 
